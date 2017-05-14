@@ -116,13 +116,11 @@ def pickWinningNumbers(ballCountDict,pickCount):
 			numNeeded = pickCount - len(contestSet)
 			logger.debug(  "numNeeded: " + str(numNeeded) + ", numAvailable: " + str(numAvailable) + " at " + str(r) + " occurrences" )
 			
-			filteredvalues = "("
+			filteredvalues = "occurrences " + str(r) + ": ("
 			for kf in dfiltered:
 				filteredvalues = filteredvalues + str(kf) + ","
 			filteredvalues = filteredvalues[:-1] + ")"
 			logger.debug( filteredvalues )
-			
-			numAtThisCount = numAvailable - numNeeded
 			
 			# take all if doing so would not leave a surplus
 			if numAvailable <= numNeeded:
@@ -144,11 +142,10 @@ def pickWinningNumbers(ballCountDict,pickCount):
 			logger.debug( "done!" )
 		
 		# debug - show the contestSet at each occurrence level as built
-		logger.debug( "contestSet:" )
-		css = ""		
+		css = "contestSet ("		
 		for cs in sorted(contestSet):
-			css += str(cs) + " "
-		css = css[:-1] + " Powerball: "
+			css += str(cs) + ","
+		css = css[:-1] + ")"
 		logger.debug( css )
 			
 	return contestSet
@@ -219,16 +216,12 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 ch.setFormatter(formatter)
 logger.addHandler(ch)
 	
-
 tickets = []
-
 debugFlag = False
 
 # main loop - allow user to keep creating new tickets, or generating the winning ticket
 while True:
 	userInput = raw_input("enter (C)ontest, (Q)uit, or enter to create a new ticket: ")
-	
-	#print "you said..." + userTorC
 	
 	if userInput.upper() == "Q":
 		quit()
