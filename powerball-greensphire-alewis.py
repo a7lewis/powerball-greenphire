@@ -1,5 +1,6 @@
 import operator
 import random
+import logging,sys
 
 class Ticket:
 	firstname = ""
@@ -18,8 +19,63 @@ class Ticket:
 		for w in self.whites:
 			wstr = wstr + str(w) + ","
 		wstr = wstr[:-1]
-		return "[" + self.firstname + " " + self.lastname + "] numbers: " + wstr + " PowerBall: " + str(self.red)
+		return self.firstname + " " + self.lastname + "  " + wstr + " PowerBall: " + str(self.red)
+	
+	# hack I dont entirely approve of this since it deliberately ignores name fields
+	def __eq__(self,other):
+		return (self.red == other.red) and (self.whites == other.whites)
+		
+	def __ne__(self,other):
+		return not self.__eq__(other)
 
+
+def pickNumberSet(minValue,maxValue,pickCount):
+
+	numLabel = ['1st','2nd','3rd','4th','5th']
+	if pickCount == 1:
+		numLabel = ['Power Ball']
+	
+	yns = ""
+	pickRangeErrorString = " is not a number between " + str(minValue) + " and " + str(maxValue) + ", try again"
+	pickSet = set()
+	while len(pickSet) < pickCount:
+		numberAskString = "select " + numLabel[len(pickSet)] + " # (" + str(minValue) + " thru " + str(maxValue)
+		
+		exclStr = ""
+		if len(pickSet) > 0:
+			exclStr = " excluding "
+			
+		numberAskString = numberAskString + exclStr + yns + "): "
+		
+		userNumberString = raw_input(numberAskString)		
+		
+		# validate numberAskString, parses as integer, is in range, and not already picked
+		try:
+			userInt = int(userNumberString)
+		except ValueError:
+			print userNumberString + pickRangeErrorString
+			continue	
+		if( userInt > maxValue or userInt < minValue ):
+			print userNumberString + pickRangeErrorString
+			continue		
+		if( userInt in pickSet ):
+			print userNumberString + " has already been chosen, please pick a different number"
+			continue
+			
+		pickSet.add( userInt )
+		
+		# the exclusion list - string of all existing numbers in pickSet
+		if len(pickSet) == 1:		
+			yns = str(list(pickSet)[0])
+		if len(pickSet) > 1:
+			yns = ""
+			for w in list(pickSet)[:-1] :
+				yns = yns + str(w) + ", "		
+			# chop off final ', ' then append ' and ' final number
+			yns = yns[:-2]
+			w = list(pickSet)[-1]
+			yns = yns + " and " + str(w)
+	return pickSet
 
 def createNewTicket():
 
@@ -34,127 +90,37 @@ def createNewTicket():
 	
 	numLabel = ['1st','2nd','3rd','4th','5th']
 	
-	# whites - get 5 unique numbers between 1 and 69
-	whites = set()
-	
-	yns = ""
-	whiteMin = 1
-	whiteMax = 69
-	whitesRangeErrorString = " is not a number between " + str(whiteMin) + " and " + str(whiteMax) + ", try again"
-	
-	while len(whites) < 5:
-		numberAskString = "select " + numLabel[len(whites)] + " # (" + str(whiteMin) + " thru " + str(whiteMax)
+	whites = pickNumberSet(1,69,5)
+	reds = pickNumberSet(1,26,1)
 		
-		exclStr = ""
-		if len(whites) > 0:
-			exclStr = " excluding "
-			
-		numberAskString = numberAskString + exclStr + yns + "): "
-		
-		userNumberString = raw_input(numberAskString)
-		
-		
-		# todo - validate numberAskString, integer in range?
-		try:
-			userInt = int(userNumberString)
-		except ValueError:
-			print userNumberString + whitesRangeErrorString
-			continue
-		
-		if( userInt > whiteMax or userInt < whiteMin ):
-			print userNumberString + whitesRangeErrorString
-			continue
-		
-		if( userInt in whites ):
-			print userNumberString + " has already been chosen, please pick a different number"
-			continue
-			
-		whites.add( userInt )
-		
-		# the exclusion list - string of all existing whites
-		if len(whites) == 1:		
-			yns = str(list(whites)[0])
-		if len(whites) > 1:
-			yns = ""
-			for w in list(whites)[:-1] :
-				yns = yns + str(w) + ", "		
-			# chop off final ', ' then append ' and ' final white
-			yns = yns[:-2]
-			w = list(whites)[-1]
-			yns = yns + " and " + str(w)
-	
-	# todo - the red ball (1-26)	
-		
-	#print "all done picking your numbers..." + yns
-	
-	haveRedBall = False
-	redMin = 1
-	redMax = 26
-	redRangeErrorString = " is not a number between " + str(redMin) + " and " + str(redMax) + ", try again"
-	
-	while haveRedBall == False:
-			
-		numberAskString = "select Power Ball # (" + str(redMin) + " thru " + str(redMax) + "): "
-		redBallString = raw_input(numberAskString)
-		
-		try:
-			redInt = int(redBallString)
-		except ValueError:
-			print redBallString + redRangeErrorString
-			continue
-			
-		if( redInt > redMax or redInt < redMin ):
-			print redBallString + redRangeErrorString
-			continue
-			
-		haveRedBall = True
-		
-	print "Powerball: " + str(redInt)
-	aticket = Ticket(userFirst,userLast,whites,redInt)
+	aticket = Ticket(userFirst,userLast,whites,next(iter(reds)))
 	return aticket
 
 
-def runContest(ticketlist):
-	
-	# debug - show that we have all of the tickets
-	for t in ticketlist:
-		print t
-	
-	whitecount = {}	
-	# iterate the tickets - increment counters to track the most prevalent numbers
-	for t in ticketlist:
-		for w in t.whites:
-			if w in whitecount:
-				whitecount[w] = whitecount[w] + 1
-			else:
-				whitecount[w] = 1
-			
-	# whitecount now has counts of all white balls in all tickets
+def pickWinningNumbers(ballCountDict,pickCount):
 	
 	# build ordered set of occurrence counts (eg if white ball 5 is chosen by 459 tickets, 459 goes into countSet)
 	contestSet = set()
-	contestCount = 5
-	numNeeded = contestCount
+	numNeeded = pickCount
 	countset = set()	
-	for k,v in whitecount.items():
+	for k,v in ballCountDict.items():
 		countset.add(v)
 	
-	# now filter the original whitecount by occurrences in descending order
+	# now filter the original balls by occurrences in descending order
 	# keep going until enough numbers are picked to complete the contest set	
 	reverseCountSet = sorted(countset,reverse=True)
 	for r in reverseCountSet:
 		if numNeeded > 0:
-			#print "r: " + str(r)
-			dfiltered = {k:v for k,v in whitecount.items() if v == r}
+			dfiltered = {k:v for k,v in ballCountDict.items() if v == r}
 			numAvailable = len(dfiltered)
-			numNeeded = contestCount - len(contestSet)
-			print "numAvailable: " + str(numAvailable) + ", numNeeded: " + str(numNeeded) + " at " + str(r) + " occurrences"
+			numNeeded = pickCount - len(contestSet)
+			logger.debug(  "numNeeded: " + str(numNeeded) + ", numAvailable: " + str(numAvailable) + " at " + str(r) + " occurrences" )
 			
 			filteredvalues = "("
 			for kf in dfiltered:
 				filteredvalues = filteredvalues + str(kf) + ","
 			filteredvalues = filteredvalues[:-1] + ")"
-			print filteredvalues
+			logger.debug( filteredvalues )
 			
 			numAtThisCount = numAvailable - numNeeded
 			
@@ -163,53 +129,112 @@ def runContest(ticketlist):
 				for kf in dfiltered:
 					contestSet.add(kf)
 					numNeeded -= 1
-					print str(kf) + " added"			
+					logger.debug( str(kf) + " added" )			
 			# numAvailable > numNeeded - randomly pick numNeeded from numAvailable
 			else:			
 				while numNeeded > 0:				
 					picklist = list(dfiltered)
 					ri = random.randint(0, len(dfiltered) - 1)
-					#print str(ri) + " list is: " + str(len(dfiltered)) + " long"
 					pickvalue = picklist[ri]
 					contestSet.add(pickvalue)
 					numNeeded -= 1
 					picklist.remove(pickvalue)
-					print "ri: " + str(ri) + " value: " + str(pickvalue) + " added"				
+					logger.debug( "ri: " + str(ri) + " value: " + str(pickvalue) + " added" )				
 		else:
-			print "done!"
+			logger.debug( "done!" )
 		
 		# debug - show the contestSet at each occurrence level as built
-		print "Powerball winning number:"
+		logger.debug( "contestSet:" )
 		css = ""		
 		for cs in sorted(contestSet):
 			css += str(cs) + " "
 		css = css[:-1] + " Powerball: "
-		print css
+		logger.debug( css )
+			
+	return contestSet
+
+def runContest(ticketlist):
+	
+	# show all of the tickets
+	for t in ticketlist:
+		print t
+	
+	whitecount = {}
+	redcount = {}	
+	# iterate the tickets - increment counters to track the most prevalent numbers
+	for t in ticketlist:
+		for w in t.whites:
+			if w in whitecount:
+				whitecount[w] += 1
+			else:
+				whitecount[w] = 1
+				
+		r = t.red
+		if r in redcount:
+			redcount[r] += 1
+		else:
+			redcount[r] = 1
+			
+	# pick desired number of winning balls from each color set
+	logger.debug("pick the winning numbers")
+	whiteSet = pickWinningNumbers(whitecount,5)
+	logger.debug("pick the winning Power Ball")
+	redSet = pickWinningNumbers(redcount,1)	
+		
+	# show winning ticket
+	print "Powerball winning number:"
+	css = ""		
+	for cs in sorted(whiteSet):
+		css += str(cs) + " "
+	css = css + "Powerball: " + str(next(iter(redSet)))
+	print css
+	
 	
 	# at this point there must be a complete contest set
 	# if only a single contestant enters a single ticket, that ticket will become the winner (all occurrences 1)
 	
-	# bonus todo - check all tickets to see if any are winners
-			
+	# bonus - check all tickets to see if any are winners
+	winningTicket = Ticket( "winning", "ticket", whiteSet, next(iter(redSet)) )
+	foundWinner = False
+	for t in ticketlist:
+		if t == winningTicket:
+			print "ding ding, we have a winner: " + str(t)
+			foundWinner = True
+	if not foundWinner:
+		print "sorry, no winning ticket this time"
+		
 	return
 	
-	
+# MAIN
 
-print "powerball, baby!"
+logger = logging.getLogger()
+logger.setLevel(logging.CRITICAL)
+ch = logging.StreamHandler(sys.stdout)
+ch.setLevel(logging.NOTSET)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+ch.setFormatter(formatter)
+logger.addHandler(ch)
+	
 
 tickets = []
 
 
 # main loop - allow user to keep creating new tickets, or generating the winning ticket
 while True:
-	userTorC = raw_input("enter (C)ontest, (Q)uit, or enter to create a new ticket: ")
+	userInput = raw_input("enter (C)ontest, (Q)uit, or enter to create a new ticket: ")
 	
 	#print "you said..." + userTorC
 	
-	if userTorC.upper() == "Q":
+	if userInput.upper() == "Q":
 		quit()
-	elif userTorC.upper() == "C":
+	elif userInput.upper() == "C":
 		runContest(tickets)
+	elif userInput.upper() == "D":
+		logging.getLogger().setLevel(logging.DEBUG)
+		print "logging debug on"
+	elif userInput.upper() == "N":
+		logging.getLogger().setLevel(logging.CRITICAL)
+		print "logging debug off"
 	else:
 		aticket = createNewTicket()
 		tickets.append(aticket)
