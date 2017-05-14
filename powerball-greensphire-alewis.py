@@ -221,7 +221,7 @@ debugFlag = False
 
 # main loop - allow user to keep creating new tickets, or generating the winning ticket
 while True:
-	userInput = raw_input("enter (C)ontest, (Q)uit, or enter to create a new ticket: ")
+	userInput = raw_input("enter (C)ontest, (Q)uit, (D)ebug toggle, or enter to create a new ticket: ")
 	
 	if userInput.upper() == "Q":
 		quit()
