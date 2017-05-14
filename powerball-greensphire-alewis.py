@@ -131,10 +131,10 @@ def pickWinningNumbers(ballCountDict,pickCount):
 					numNeeded -= 1
 					logger.debug( str(kf) + " added" )			
 			# numAvailable > numNeeded - randomly pick numNeeded from numAvailable
-			else:			
+			else:
+				picklist = list(dfiltered)			
 				while numNeeded > 0:				
-					picklist = list(dfiltered)
-					ri = random.randint(0, len(dfiltered) - 1)
+					ri = random.randint(0, len(picklist) - 1)
 					pickvalue = picklist[ri]
 					contestSet.add(pickvalue)
 					numNeeded -= 1
@@ -154,6 +154,10 @@ def pickWinningNumbers(ballCountDict,pickCount):
 	return contestSet
 
 def runContest(ticketlist):
+	
+	if len(ticketlist) == 0:
+		print "no tickets created, cannot generate a winning ticket"
+		return
 	
 	# show all of the tickets
 	for t in ticketlist:
@@ -218,6 +222,7 @@ logger.addHandler(ch)
 
 tickets = []
 
+debugFlag = False
 
 # main loop - allow user to keep creating new tickets, or generating the winning ticket
 while True:
@@ -230,11 +235,12 @@ while True:
 	elif userInput.upper() == "C":
 		runContest(tickets)
 	elif userInput.upper() == "D":
-		logging.getLogger().setLevel(logging.DEBUG)
-		print "logging debug on"
-	elif userInput.upper() == "N":
-		logging.getLogger().setLevel(logging.CRITICAL)
-		print "logging debug off"
+		debugFlag = not debugFlag
+		if debugFlag:
+			logging.getLogger().setLevel(logging.DEBUG)
+		else:
+			logging.getLogger().setLevel(logging.CRITICAL)
+		print "logging debug " + str(debugFlag)
 	else:
 		aticket = createNewTicket()
 		tickets.append(aticket)
