@@ -1,6 +1,7 @@
 import operator
 import random
 import logging,sys
+import math
 
 class Ticket:
 	firstname = ""
@@ -16,7 +17,7 @@ class Ticket:
 		
 	def __str__(self):
 		wstr = ""
-		for w in self.whites:
+		for w in sorted(self.whites):
 			wstr = wstr + str(w) + ","
 		wstr = wstr[:-1]
 		return self.firstname + " " + self.lastname + "  " + wstr + " PowerBall: " + str(self.red)
@@ -98,6 +99,9 @@ def createNewTicket():
 
 
 def pickWinningNumbers(ballCountDict,pickCount):
+
+	# never tell me the odds
+	combos = 1
 	
 	# build ordered set of occurrence counts (eg if white ball 5 is chosen by 459 tickets, 459 goes into countSet)
 	contestSet = set()
@@ -130,6 +134,15 @@ def pickWinningNumbers(ballCountDict,pickCount):
 					logger.debug( str(kf) + " added" )			
 			# numAvailable > numNeeded - randomly pick numNeeded from numAvailable
 			else:
+				f = math.factorial
+				fNumAvail = f(numAvailable)
+				fNumAvailMinusNeeded = f(numAvailable - numNeeded)
+				fNumNeeded = f(numNeeded)
+				logger.debug( "C = f(n) / ( f(n-c) * f(c) )" )
+				logger.debug( "n=" + str( numAvailable ) + " c=" + str(numNeeded) + " C = f("+str(numAvailable) + ") / ( f(" + str(numAvailable - numNeeded) + ") * f("+str(numNeeded) + "))" )
+				logger.debug( "n=" + str( numAvailable ) + " c=" + str(numNeeded) + " C = "+str(fNumAvail) + " / (" + str(fNumAvailMinusNeeded) + " * "+str(fNumNeeded) + ")" )
+				combos = combos * ( fNumAvail / ( fNumAvailMinusNeeded * fNumNeeded ) )
+			
 				picklist = list(dfiltered)			
 				while numNeeded > 0:				
 					ri = random.randint(0, len(picklist) - 1)
@@ -148,7 +161,7 @@ def pickWinningNumbers(ballCountDict,pickCount):
 		css = css[:-1] + ")"
 		logger.debug( css )
 			
-	return contestSet
+	return contestSet, combos
 
 def runContest(ticketlist):
 	
@@ -177,10 +190,15 @@ def runContest(ticketlist):
 			redcount[r] = 1
 			
 	# pick desired number of winning balls from each color set
+	
+	# double bonus - calculate the possible combinations of winning ticket available
+	
 	logger.debug("pick the winning numbers")
-	whiteSet = pickWinningNumbers(whitecount,5)
+	whiteSet, whiteCombos = pickWinningNumbers(whitecount,5)
 	logger.debug("pick the winning Power Ball")
-	redSet = pickWinningNumbers(redcount,1)	
+	redSet, redCombos = pickWinningNumbers(redcount,1)
+	
+	logger.debug( "combos white: " + str(whiteCombos) + ", red: " + str(redCombos)	)
 		
 	# show winning ticket
 	print "Powerball winning number:"
@@ -189,6 +207,9 @@ def runContest(ticketlist):
 		css += str(cs) + " "
 	css = css + "Powerball: " + str(next(iter(redSet)))
 	print css
+	
+	print "There are " + str(len(ticketlist)) + " tickets, and " + str( whiteCombos * redCombos ) + " possible winning tickets"
+	print "Each ticket has a 1 in " + str( (whiteCombos * redCombos) / len(ticketlist) ) + " chance of winning"
 	
 	
 	# at this point there must be a complete contest set
