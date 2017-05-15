@@ -209,7 +209,7 @@ def runContest(ticketlist):
 	print css
 	
 	print "There are " + str(len(ticketlist)) + " tickets, and " + str( whiteCombos * redCombos ) + " possible winning tickets"
-	print "Each ticket has a 1 in " + str( (whiteCombos * redCombos) / len(ticketlist) ) + " chance of winning"
+	print "There is a 1 in " + str( (whiteCombos * redCombos) / len(ticketlist) ) + " chance of a winning ticket being picked"
 	
 	
 	# at this point there must be a complete contest set
