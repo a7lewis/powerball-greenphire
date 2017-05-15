@@ -118,7 +118,7 @@ def pickWinningNumbers(ballCountDict,pickCount):
 			dfiltered = {k:v for k,v in ballCountDict.items() if v == r}
 			numAvailable = len(dfiltered)
 			numNeeded = pickCount - len(contestSet)
-			logger.debug(  "numNeeded: " + str(numNeeded) + ", numAvailable: " + str(numAvailable) + " at " + str(r) + " occurrences" )
+			logger.debug( "numNeeded: %d, numAvailable: %d at %d occurrences" % (numNeeded,numAvailable,r) )
 			
 			filteredvalues = "occurrences " + str(r) + ": ("
 			for kf in dfiltered:
@@ -139,8 +139,8 @@ def pickWinningNumbers(ballCountDict,pickCount):
 				fNumAvailMinusNeeded = f(numAvailable - numNeeded)
 				fNumNeeded = f(numNeeded)
 				logger.debug( "C = f(n) / ( f(n-c) * f(c) )" )
-				logger.debug( "n=" + str( numAvailable ) + " c=" + str(numNeeded) + " C = f("+str(numAvailable) + ") / ( f(" + str(numAvailable - numNeeded) + ") * f("+str(numNeeded) + "))" )
-				logger.debug( "n=" + str( numAvailable ) + " c=" + str(numNeeded) + " C = "+str(fNumAvail) + " / (" + str(fNumAvailMinusNeeded) + " * "+str(fNumNeeded) + ")" )
+				logger.debug( "n=%d c=%d C = f(%d) / ( f(%d) * f(%d))" % (numAvailable,numNeeded,numAvailable,numAvailable-numNeeded,numNeeded) )
+				logger.debug( "n=%d c=%d C = %d / (%d * %d)" % (numAvailable,numNeeded,fNumAvail,fNumAvailMinusNeeded,fNumNeeded) )
 				combos = combos * ( fNumAvail / ( fNumAvailMinusNeeded * fNumNeeded ) )
 			
 				picklist = list(dfiltered)			
@@ -208,8 +208,8 @@ def runContest(ticketlist):
 	css = css + "Powerball: " + str(next(iter(redSet)))
 	print css
 	
-	print "There are " + str(len(ticketlist)) + " tickets, and " + str( whiteCombos * redCombos ) + " possible winning tickets"
-	print "There is a 1 in " + str( (whiteCombos * redCombos) / len(ticketlist) ) + " chance of a winning ticket being picked"
+	print "There are %d tickets, and %d possible winning tickets" % ( len(ticketlist), whiteCombos * redCombos )
+	print "There is a 1 in %d chance of a winning ticket being picked" % ((whiteCombos * redCombos) / len(ticketlist))
 	
 	
 	# at this point there must be a complete contest set
@@ -220,7 +220,7 @@ def runContest(ticketlist):
 	foundWinner = False
 	for t in ticketlist:
 		if t == winningTicket:
-			print "ding ding, we have a winner: " + str(t)
+			print "ding ding, we have a winner: %s" % (t)
 			foundWinner = True
 	if not foundWinner:
 		print "sorry, no winning ticket this time"
